@@ -12,4 +12,5 @@ try:
         for cursor in tracking2.cursors():
             print "2: "+str(cursor)
 except KeyboardInterrupt:
-    tracking.stop()
+    tracking1.stop()
+    tracking2.stop()

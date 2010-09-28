@@ -14,6 +14,7 @@ import socket
 import inspect
 
 import OSC
+import osc ##yeah yeah its annoying, i'm hacking.
 import profiles
 
 class CallbackError(Exception):
@@ -106,3 +107,42 @@ class Tracking(object):
                     getattr(profile, command)(self, message)
                 except AttributeError:
                     pass
+
+
+
+class TuioServer(object):
+    def __init__(self, host='127.0.0.1', port=3333):
+        self.host = host
+        self.port = port
+        self.current_frame = 0
+        self.last_frame = 0
+
+        osc.init()
+        self.cursors = {} 
+
+    def refreshed(self):
+        """
+        Returns True if there was a new frame
+        """
+        return self.current_frame >= self.last_frame
+    
+    
+
+    def update(self):
+        """
+        Tells the connection manager to receive the next 1024 byte of messages
+        to analyze.
+        """
+        try:
+            osc.sendMsg("/tuio/2Dcur", ["fseq", self.current_frame], self.host, self.port)
+            args = ["alive"]
+            args.extend([t.sessionid for t in self.cursors.values()])
+            osc.sendMsg("/tuio/2Dcur", args, self.host, self.port)
+            for cursor in self.cursors.values():  
+                osc.sendMsg("/tuio/2Dcur", ["set", cursor.sessionid, cursor.xpos, cursor.ypos, cursor.xmot, cursor.ymot, cursor.mot_accel], self.host, self.port)
+            
+            self.last_frame = self.current_frame
+            self.current_frame += 1
+        except socket.error:
+            pass
+
