@@ -51,10 +51,11 @@ class Tracker:
             yield self.normalize_cursor(cursor)
 
 class Server:
-    def __init__(self, outport, trackers, threshold = 0.03, cleanupticks = 10):
+    def __init__(self, outport, trackers, threshold = 0.004, cleanupticks = 10):
         """Threshold is the distance (as a percentage) withinwhich two cursors are the same."""
         self.server = tuio.TuioServer(port = outport)
         self.trackers = trackers
+
         self.threshold = threshold
         self.cleanupticks = cleanupticks
         self.nextid = 1
@@ -69,9 +70,10 @@ class Server:
             print "Duplicate cursor %d on port %d for %d ignored" % (cursor.sessionid, tracker.port, srvid)
             pass
         else:
-            print "Updating %d as %d on port %d" % (srvid, cursor.sessionid, tracker.port)
+            #print "Updating %d as %d on port %d" % (srvid, cursor.sessionid, tracker.port)
             cursor.lastused = self.tick
             cursor.sessionid = srvid
+            cursor.tracker = tracker.port
             self.server.cursors[srvid] = cursor
 
     def close_enough(self, cursor1, cursor2):
@@ -87,7 +89,7 @@ class Server:
         """Add an entry in cursormap for cursor, inserting into the server if necessary."""
         for srvcursor in self.server.cursors.itervalues():
             # make sure this cursor was used very recently
-            if srvcursor.sessionid > self.nextid - 100 and self.close_enough(srvcursor, cursor):
+            if srvcursor.tracker != tracker.port and srvcursor.lastused > self.tick - 100 and self.close_enough(srvcursor, cursor):
                 # should be same cursor
                 self.cursormap[(tracker.port, cursor.sessionid)] = (srvcursor.sessionid, self.tick)
                 print "Mapped %d on port %d to %d" % (cursor.sessionid, tracker.port, srvcursor.sessionid)
@@ -98,6 +100,7 @@ class Server:
         self.cursormap[(tracker.port, cursor.sessionid)] = (newid, self.tick)
         cursor.sessionid = newid
         cursor.lastused = self.tick
+        cursor.tracker = tracker.port
         self.server.cursors[newid] = cursor
 
 

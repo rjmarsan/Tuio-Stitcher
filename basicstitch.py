@@ -22,10 +22,10 @@ try:
         tracking2.update()
         for cursor in tracking1.cursors():
             server.cursors[cursor.sessionid*2] = transform(cursor)
-            print "1: "+str(cursor)
+            print "1: ID: "+str(cursor.sessionid)+"X:"+str(cursor.xpos)+" Y:"+str(cursor.ypos)
         for cursor in tracking2.cursors():
             server.cursors[cursor.sessionid*2+1] = transform(cursor)
-            print "2: "+str(cursor)
+            print "2: ID: "+str(cursor.sessionid)+"X:"+str(cursor.xpos)+" Y:"+str(cursor.ypos)
         server.update()
 except KeyboardInterrupt:
     tracking1.stop()
